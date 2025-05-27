@@ -24,6 +24,11 @@ dbt: SQL-based data transformation
 
 Snowflake: Cloud data warehouse
 
+Link to the visualizations:
+https://app.hex.tech/bb377a6b-983d-4888-b406-7babd3f7fb89/hex/caa43cfc-a0a5-4ead-a400-0a9d4559030d/draft/logic
+
+
+
 Hex: Interactive data visualization
 
 
