@@ -1,0 +1,19 @@
+-- This model creates a clean view of the raw transaction data with NULL date handling
+
+CREATE OR REPLACE VIEW stg_transactions AS
+SELECT
+    TRANSACTION_ID,
+    ACCOUNT_ID,
+    TRANSACTION_AMOUNT as AMOUNT,
+    TRANSACTION_AMOUNT,
+    TRANSACTION_TYPE,
+    TRANSACTION_DATE,
+    TRANSACTION_DESCRIPTION as NAME,
+    NULL as MERCHANT_NAME,
+    SPLIT_PART(SPENDING_CATEGORY, ', ', 1) as PRIMARY_CATEGORY,
+    SPENDING_CATEGORY as FULL_CATEGORY_ARRAY,
+    FALSE as PENDING,
+    NULL as PAYMENT_CHANNEL,
+    EXTRACTED_AT,
+    DATA_SOURCE
+FROM synthetic_transactions;

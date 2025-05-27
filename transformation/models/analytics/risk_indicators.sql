@@ -1,0 +1,71 @@
+-- models/analytics/risk_indicators.sql
+CREATE OR REPLACE TABLE risk_indicators AS
+WITH transactions AS (
+    SELECT * FROM int_transaction_categories
+),
+     income AS ( -- calculate total income for each month
+         SELECT
+             DATE_TRUNC('month', TRANSACTION_DATE)::DATE as MONTH,
+             SUM(TRANSACTION_AMOUNT) as MONTHLY_INCOME
+         FROM transactions
+         WHERE TRANSACTION_TYPE = 'income'
+         GROUP BY 1
+     ),
+     expenses AS (
+         SELECT
+             DATE_TRUNC('month', TRANSACTION_DATE)::DATE as MONTH,
+             SUM(TRANSACTION_AMOUNT) as MONTHLY_EXPENSES,
+             SUM(CASE WHEN SPENDING_CATEGORY = 'Housing' THEN TRANSACTION_AMOUNT ELSE 0 END) as HOUSING_EXPENSES,
+             SUM(CASE WHEN SPENDING_CATEGORY = 'Dining' THEN TRANSACTION_AMOUNT ELSE 0 END) as DINING_EXPENSES,
+             SUM(CASE WHEN SPENDING_CATEGORY = 'Entertainment' THEN TRANSACTION_AMOUNT ELSE 0 END) as ENTERTAINMENT_EXPENSES
+         FROM transactions
+         WHERE TRANSACTION_TYPE = 'expense'
+         GROUP BY 1
+     ),
+     risk_calcs AS ( -- join income and expense data
+         SELECT -- handle NULL values, replace them with 0
+             COALESCE(i.MONTH, e.MONTH) as MONTH,
+             COALESCE(i.MONTHLY_INCOME, 0) as MONTHLY_INCOME,
+             COALESCE(e.MONTHLY_EXPENSES, 0) as MONTHLY_EXPENSES,
+             COALESCE(e.HOUSING_EXPENSES, 0) as HOUSING_EXPENSES,
+             COALESCE(e.DINING_EXPENSES, 0) as DINING_EXPENSES,
+             COALESCE(e.ENTERTAINMENT_EXPENSES, 0) as ENTERTAINMENT_EXPENSES,
+             CASE
+                 WHEN COALESCE(i.MONTHLY_INCOME, 0) = 0 THEN NULL
+                 ELSE COALESCE(e.MONTHLY_EXPENSES, 0) / NULLIF(i.MONTHLY_INCOME, 0)
+                 END as EXPENSE_TO_INCOME_RATIO,
+             CASE
+                 WHEN COALESCE(i.MONTHLY_INCOME, 0) = 0 THEN NULL
+                 ELSE COALESCE(e.HOUSING_EXPENSES, 0) / NULLIF(i.MONTHLY_INCOME, 0)
+                 END as HOUSING_TO_INCOME_RATIO,
+             CASE
+                 WHEN COALESCE(e.MONTHLY_EXPENSES, 0) = 0 THEN NULL
+                 ELSE (COALESCE(e.DINING_EXPENSES, 0) + COALESCE(e.ENTERTAINMENT_EXPENSES, 0)) / NULLIF(e.MONTHLY_EXPENSES, 0)
+                 END as DISCRETIONARY_RATIO
+         FROM income i
+                  FULL OUTER JOIN expenses e ON i.MONTH = e.MONTH
+     )
+SELECT
+    MONTH,
+    MONTHLY_INCOME,
+    MONTHLY_EXPENSES,
+    EXPENSE_TO_INCOME_RATIO,
+    HOUSING_TO_INCOME_RATIO,
+    DISCRETIONARY_RATIO,
+    CASE WHEN EXPENSE_TO_INCOME_RATIO > 0.9 THEN TRUE
+         WHEN EXPENSE_TO_INCOME_RATIO IS NULL THEN NULL
+         ELSE FALSE
+        END as HIGH_EXPENSE_RATIO_FLAG,
+    CASE WHEN HOUSING_TO_INCOME_RATIO > 0.5 THEN TRUE
+         WHEN HOUSING_TO_INCOME_RATIO IS NULL THEN NULL
+         ELSE FALSE
+        END as HIGH_HOUSING_COST_FLAG,
+    CASE WHEN DISCRETIONARY_RATIO > 0.3 THEN TRUE
+         WHEN DISCRETIONARY_RATIO IS NULL THEN NULL
+         ELSE FALSE
+        END as HIGH_DISCRETIONARY_SPENDING_FLAG
+FROM risk_calcs
+ORDER BY MONTH DESC;
+
+-- Verify it was created
+SELECT * FROM risk_indicators LIMIT 5;

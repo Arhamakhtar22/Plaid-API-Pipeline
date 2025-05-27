@@ -1,0 +1,16 @@
+# models/sources.yml
+version: 2
+
+sources:
+  - name: raw_data
+    database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+    schema: "{{ env_var('SNOWFLAKE_SCHEMA') }}"
+    tables:
+      - name: raw_transactions
+        description: "Raw transaction data from Plaid API"
+        columns:
+          - name: transaction_id
+            description: "Primary key for transactions"
+            tests:
+              - unique
+              - not_null
