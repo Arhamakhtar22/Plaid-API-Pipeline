@@ -1,6 +1,6 @@
 Financial Data Pipeline Project
 
-This project demonstrates a complete financial data pipeline, including extraction, transformation, loading, visualization, and orchestration. It integrates transaction data from Plaid API into Snowflake, transforms raw data into actionable insights, automates workflows with Airflow, and visualizes results in Hex.
+This project demonstrates a complete financial data pipeline, including extraction, transformation, loading, visualization, and orchestration. It integrates transaction data from Plaid API into Snowflake, transforms raw data into actionable insights, and visualizes results in Hex.
 
 Project Overview
 
