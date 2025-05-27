@@ -1,0 +1,19 @@
+# API and Data Processing
+plaid-python
+pandas
+numpy
+
+# Database Connections
+snowflake-connector-python
+snowflake-sqlalchemy
+
+# ETL Tools
+dbt-core
+dbt-snowflake
+
+# Orchestration
+apache-airflow
+
+# Visualization
+plotly
+ipykernel
